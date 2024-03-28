@@ -2,22 +2,34 @@ from string import ascii_lowercase, ascii_uppercase
 from sys import argv
 from os import stat
 from itertools import product
+from timeit import default_timer
+from time import process_time
 
 
 class Generator():
-    def __init__(self, savePath: str):
+    def __init__(self, savePath: str, buffer: int = 10):
         self._generatedCombos = []
         self._generatedSize   = 0
+        self._buffer          = buffer
         self._savePath        = savePath
 
 
-    def _appendToFile(self, file_path: str, current: int) -> None:
+    def _appendToFile(self, file_path: str, currentNum: int) -> None:
         with open(file_path, 'a') as file:
             file.write('\n'.join(self._generatedCombos) + '\n')
 
-
-        self.msg(f'{current} / {self._generatedSize}', 'w')
+        self.msg(f'{currentNum} / {self._generatedSize}', 'w')
         self._generatedCombos.clear()
+
+    def _getFileSize(self, file_path: str) -> str:
+        total_bytes: int = stat(file_path).st_size
+        MiB:         int = 2**20
+
+        if total_bytes >= MiB:
+            return f'{round(total_bytes / MiB)}MiB'
+
+        return f'{round(total_bytes / 2**10)}KiB' 
+
 
 
 
@@ -31,7 +43,6 @@ class Generator():
 
         if terminate or itype == 'ERROR':
             exit(1)
-
 
 
     def getArguments(self) -> list[any, int, int]:
@@ -59,7 +70,6 @@ class Generator():
         return [arr, v_min, v_max]
 
 
-
     def calculateGeneratedSize(self, arr: list, minv: int, maxv: int) -> int:
         self._generatedSize = sum([ len(arr) ** x for x in range(minv, maxv + 1) ]) 
 
@@ -72,11 +82,13 @@ class Generator():
         if not self._generatedSize:
             self.calculateGeneratedSize(arr, minv, maxv)
 
+        wt: float = default_timer()
+        ct: float = process_time() 
 
         self.msg(f'0 / {self._generatedSize}', 'w')
 
         currentNum: int = 0
-        BUFF:       int = self._generatedSize // 10
+        BUFF:       int = self._generatedSize // self._buffer
         filename:   str = f'wordlist_{self._generatedSize}.txt'
         FULL_PATH:  str = f'{self._savePath}/{filename}'
 
@@ -88,23 +100,15 @@ class Generator():
                     currentNum += BUFF
                     self._appendToFile(FULL_PATH, currentNum)
 
-
         if len(self._generatedCombos):
-            currentNum = self._generatedSize
-            self._appendToFile(FULL_PATH, currentNum)
+            self._appendToFile(FULL_PATH, self._generatedSize)
 
 
-        total_bytes: int = stat(FULL_PATH).st_size
-        MiB:         int = 2**20
-
-        if total_bytes >= MiB:
-            total_value = f'{round(total_bytes / MiB)}MiB'
-        else:
-            total_value = f'{round(total_bytes / 2**10)}KiB' 
-
+        total_value: str = self._getFileSize(FULL_PATH)
 
         self.msg(f'Finished generating "{filename}". Total file size: {total_value}', 'i')
-
+        self.msg(f'Execution time: {round(default_timer() - wt, 4)}s', 'i')
+        self.msg(f'CPU time: {round(process_time() - ct, 4)}s', 'i')
 
 
     def getArrayValues(self, userList: str) -> list:

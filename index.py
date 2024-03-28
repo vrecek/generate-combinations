@@ -1,8 +1,13 @@
 from App import Generator
+from pathlib import Path
 
 
-SAVE_PATH: str = '/home/vrecek/Downloads'
-App = Generator(SAVE_PATH)
+
+SAVE_PATH: str = Path.home()
+BUFFER:    int = 10
+
+App = Generator(SAVE_PATH, BUFFER)
+
 
 userList, v_min, v_max = App.getArguments()
 
