@@ -114,7 +114,7 @@ class Generator():
     def getArrayValues(self, userList: str) -> list:
         match userList:
             case 'num':
-                return [num for num in range(0, 10)]
+                return [str(num) for num in range(0, 10)]
 
             case 'alphalower':
                 return ascii_lowercase
